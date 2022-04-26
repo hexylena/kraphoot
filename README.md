@@ -1,6 +1,6 @@
 # Kraphoot
 
-It's like Kahoot but Krap™.
+It's like Kahoot™ but not really.
 
 Based on: https://jmcker.github.io/Peer-to-Peer-Cue-System it was trivial to implement a student-teacher broadcast type system which handles:
 
@@ -17,7 +17,9 @@ Based on: https://jmcker.github.io/Peer-to-Peer-Cue-System it was trivial to imp
 - [x] Receiving their answers
 - [ ] Self-entered names
 - [ ] Leaderboard
+- [ ] Media on the questions/slides.
 - [ ] Showing correct answer student side.
+- [ ] Any sense of aesthetics
 
 Question types:
 
