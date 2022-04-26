@@ -1,28 +1,26 @@
-<div style="white-space: pre;">
+# Kraphoot
 
-# Peer-to-Peer Cue System #
+It's like Kahoot but Krap™.
 
-Cue system for simple two-way communication and visual signaling using a WebRTC peer-to-peer connection.
-This was initially designed for signaling on-stage actors during a theater performance.
+Based on: https://jmcker.github.io/Peer-to-Peer-Cue-System it was trivial to implement a student-teacher broadcast type system which handles:
 
-Demo: https://jmcker.github.io/Peer-to-Peer-Cue-System
+- "quiz questions" defined on the server side
+- Students joining a teacher's session
+- The teacher able to send the questions to the student's views, and let them choose an answer.
+- Results view
 
-[PeerJS examples](https://peerjs.com/examples.html)
 
-### Setup ###
+## Features
 
-1. Open receive.html on the receiving device.
-2. Open send.html on the sending device.
-3. Copy the ID from the receiving device to the sending device's ID field.
-4. Press *Connect*.
-4. Both should indicate a successful connection in the *Status* box.
+- [x] JSON structured quizes
+- [x] Sending questions to students
+- [x] Receiving their answers
+- [ ] Self-entered names
+- [ ] Leaderboard
+- [ ] Showing correct answer student side.
 
-### Features ###
+Question types:
 
-The receiver has access to large indicators for standby, go, fade, and stop signals.
-
-The sender has access to buttons that send the standby, go, fade, and stop signals, triggering the receiver's indicators.
-
-Both have access to a two-way messenger for additional communication.
-
-</div>
+- [x] choose-1
+- [ ] choose-many
+- [ ] true/false (choose-1 sub-case)
