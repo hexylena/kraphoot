@@ -24,6 +24,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  * */
 
+function hideJoin(){
+	document.getElementById("connect-area").style.display = 'none';
+}
+
+function showDebug(){
+	document.getElementsByClassName("debug-info")[0].style.display = '';
+}
+
 (function () {
 
 	var lastPeerId = null;
@@ -41,6 +49,8 @@ SOFTWARE.
 	var clearMsgsButton = document.getElementById("clearMsgsButton");
 	var connectButton = document.getElementById("connect-button");
 	var cueString = "<span class=\"cueMsg\">Cue: </span>";
+
+	var player = {};
 
 	/**
 	 * Create the Peer object for our end of the connection.
@@ -67,6 +77,7 @@ SOFTWARE.
 			}
 
 			console.log('ID: ' + peer.id);
+			postInit();
 		});
 		peer.on('connection', function (c) {
 			// Disallow incoming connections
@@ -93,7 +104,18 @@ SOFTWARE.
 			console.log(err);
 			alert('' + err);
 		});
+
 	};
+
+	function postInit(){
+		var urlOption = (new URL(document.location)).searchParams.get("id");
+		if(urlOption !== null){
+			recvIdInput.value = urlOption;
+			join(null, urlOption);
+			//setTimeout(function() { join(null, urlOption) }, 500);
+		}
+		showWelcome();
+	}
 
 	/**
 	 * Create the connection between the two Peers.
@@ -101,14 +123,16 @@ SOFTWARE.
 	 * Sets up callbacks that handle any events related to the
 	 * connection and data received on it.
 	 */
-	function join() {
+	function join(evt, joinId) {
 		// Close old connection
 		if (conn) {
 			conn.close();
 		}
 
 		// Create connection to destination peer specified in the input field
-		conn = peer.connect(recvIdInput.value, {
+		var connectToId = joinId || recvIdInput.value
+		console.log('connecting to ' + connectToId)
+		conn = peer.connect(connectToId, {
 			reliable: true
 		});
 
@@ -127,7 +151,7 @@ SOFTWARE.
 			console.log(data)
 			if(data.type === "choose-1"){
 				addMessage(`<span class=\"peerMsg\">Teacher asked: ${data.title}</span>`);
-				questionArea.innerHTML = showQuestion(data);
+				showQuestion(data);
 			} else {
 				addMessage("<span class=\"peerMsg\">Peer:</span> " + data);
 			}
@@ -172,7 +196,7 @@ SOFTWARE.
 	};
 
 	function showWelcome(){
-		message.innerHTML = `
+		questionArea.innerHTML = `
 			<div class="display: flex; align-items: center; justify-content: center;">
 				<h1>Enter your name</h1>
 				<input type="text" id="name">
@@ -181,8 +205,22 @@ SOFTWARE.
 		`
 
 		var name_input = document.getElementById(`submit-name`);
-		e.addEventListener('click', () => safeSend(document.getElementById("name").value))
+		name_input.addEventListener('click', () => {
+			player.name = document.getElementById("name").value;
+			safeSend({
+				"event": "registerPlayer",
+				"player": player,
+			})
+			showPostWelcome();
+		})
+	}
 
+	function showPostWelcome(){
+		questionArea.innerHTML = `
+			<div class="display: flex; align-items: center; justify-content: center;">
+				<h1>Get Ready ${player.name}</h1>
+			</div>
+		`
 	}
 
 	function safeSend(msg){
@@ -206,23 +244,24 @@ SOFTWARE.
 	}
 
 	function showQuestion(data){
-		var show = `<h2>${data.title}</h2>`;
+		var show = `<h1>${data.title}</h1><div>`;
 		show += data.answers.map((q, idx) => {
 			return `
-				<button id="answer-${data.id}-${idx}" value="${q}" class="btn btn-primary">${q}</button>
+				<button id="answer-${data.id}-${idx}" value="${q}" class="btn btn-primary answer-button">${q}</button>
 			`
 		}).join("");
+		show += '</div>';
+		questionArea.innerHTML = show;
 
 		data.answers.forEach((q, idx) => {
 			var e = document.getElementById(`answer-${data.id}-${idx}`);
 			e.addEventListener('click', function () {
-				if (conn && conn.open) {
-					conn.send(e.value);
-					addMessage("<span class=\"selfMsg\">Self: </span> " + e.value);
-				} else {
-					console.log('Connection is closed');
-				}
-
+				safeSend({
+					"event": "answer",
+					"question": data.id,
+					"result": e.value,
+				})
+				Array.from(document.getElementsByClassName("answer-button")).forEach(x => x.setAttribute("disabled", ""))
 			})
 		})
 
@@ -271,16 +310,19 @@ SOFTWARE.
 		}
 	});
 
-	function hideJoin(){
-		document.getElementById("connect-area").style.display = 'none';
-	}
-
 	// Clear messages box
 	clearMsgsButton.addEventListener('click', clearMessages);
 	// Start peer connection on click
 	connectButton.addEventListener('click', join);
 
 
-	// Since all our callbacks are setup, start the process of obtaining an ID
+	// Snce all our callbacks are setup, start the process of obtaining an ID
 	initialize();
+
+	// Show debug panel
+	var urlShowDebug = (new URL(document.location)).searchParams.get("debug");
+	if(urlShowDebug !== null){
+		showDebug();
+	}
+
 })();

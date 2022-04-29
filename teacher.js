@@ -45,6 +45,7 @@ SOFTWARE.
 	var showNext = document.getElementById("showNext");
 	var questionArea = document.getElementById("questionArea");
 
+	var players = {};
 
 	var currentSlide;
 	var slides = [
@@ -57,8 +58,9 @@ SOFTWARE.
 				'Not a lot',
 				'cis/het',
 			],
+			results: {},
 			correct: 'Extremely',
-			timeout: 30
+			timeout: 10
 		},
 		{
 			type: 'choose-1',
@@ -69,8 +71,9 @@ SOFTWARE.
 				'Boat',
 				'Telephone',
 			],
+			results: {},
 			correct: 'Telephone',
-			timeout: 30
+			timeout: 10
 		}
 	]
 	/**
@@ -82,7 +85,8 @@ SOFTWARE.
 	 function initialize() {
 		// Create own peer object with connection to shared PeerJS server
 		var roomId = (Math.random() * 10000000).toString().substring(0, 4);
-		peer = new Peer(`gtn-${roomId}`, {
+		//peer = new Peer(`gtn-${roomId}`, {
+		peer = new Peer(`gtn`, {
 			debug: 2,
 			host: 'localhost',
 			port: 9000,
@@ -107,6 +111,7 @@ SOFTWARE.
 			conns.push(c);
 			console.log("Connected to: " + conns.map(c => c.peer));
 			status.innerHTML = `${conns.length} students connected`;
+			players[c.peer] = {}
 			ready();
 		});
 		peer.on('disconnected', function () {
@@ -142,6 +147,8 @@ SOFTWARE.
 				console.log(conn.peer, Object.keys(conn._events))
 				conn.on('data', function (data) {
 					console.log("Data recieved");
+					console.log(data)
+					processStudentMessage(conn.peer, data);
 					var cueString = "<span class=\"cueMsg\">Cue: </span>";
 					addMessage(conn.peer.substring(0, 9) + cueString + data);
 				});
@@ -157,6 +164,29 @@ SOFTWARE.
 					conns = conns.filter(c => c.peer != conn.peer);
 				});
 			});
+	}
+
+	function processStudentMessage(connId, message){
+		if(message.event == "registerPlayer"){
+			console.log("New player!")
+			players[connId] = {
+				"name": message.player.name,
+			}
+			status.innerHTML =
+				Object.keys(players).map(x => players[x].name).join(" ");
+		} else if (message.event === "answer") {
+			if(message.question !== currentSlide){
+				console.log("Attempting to answer wrong question! Ignoring.")
+				return
+			}
+
+			slides[currentSlide].results[connId] =
+				slides[currentSlide].answers.indexOf(message.result)
+
+			console.log(slides[currentSlide])
+		} else {
+			console.log("Unknown message", message);
+		}
 	}
 
 	function addMessage(msg) {
@@ -180,12 +210,15 @@ SOFTWARE.
 	}
 
 	function showQuestion(data){
-		var show = `<h2>${data.title}</h2>`;
+		var show = `<h2>${data.title}</h2><div>`;
 		show += data.answers.map((q, idx) => {
 			return `
 				<button id="answer-${data.id}-${idx}" value="${q}" class="btn btn-primary">${q}</button>
 			`
 		}).join("");
+
+		show += '</div>'
+		show += `<div id="timer">${data.timeout} seconds</div>`
 		return show;
 	}
 
@@ -227,6 +260,50 @@ SOFTWARE.
 		e.classList.add("btn-success");
 	})
 
+	function showResults(){
+		var slide = slides[currentSlide];
+		var show = `<h1>Results</h1>`;
+		var counts = {}
+		Object.keys(slide.results).forEach(connId => {
+			var theirAnswer = slide.results[connId];
+			var answerKey = "";
+			if(theirAnswer < 0){
+				answerKey = "SOMETHING ODD";
+			} else {
+				answerKey = slide.answers[theirAnswer]
+			}
+
+			if(answerKey === slide.correct){
+				console.log(players[connId])
+				players[connId]['score'] = 1 + (players[connId]['score'] || 0);
+			}
+
+			counts[answerKey] = 1 + (counts[answerKey] || 0)
+		})
+		console.log(counts)
+		console.log(players)
+
+		show += '<table class="table table-striped">'
+		slide.answers.forEach(x => {
+			if(slide.correct === x) {
+				show += `<tr class="correct-answer"><td>${x}</td> <td>${counts[x] || 0}</td></tr>`
+			} else {
+				show += `<tr><td>${x}</td> <td>${counts[x] || 0}</td></tr>`
+			}
+		})
+		show += '</table>'
+		questionArea.innerHTML = show;
+	}
+
+	function showFinalResults(){
+		var show = `<h1>Final Results</h1>`;
+		var counts = {}
+		show += JSON.stringify(players)
+		//show += '<table class="table table-striped">'
+		//show += '</table>'
+		questionArea.innerHTML = show;
+	}
+
 	function handleCurrentSlide(){
 		var studentSlide = {
 			id: currentSlide,
@@ -238,6 +315,27 @@ SOFTWARE.
 		}
 
 		questionArea.innerHTML = showQuestion(studentSlide);
+
+		// Update the count down every 1 second
+		var slideTimer = setInterval(function() {
+			var now = new Date().getTime(),
+				timeLeft = studentSlide.started + (studentSlide.timeout * 1000) - now;
+			var doneCondition = timeLeft < 0;
+
+			// How many students have answered?
+			if(Object.keys(players).length === Object.keys(slides[currentSlide].results).length){
+				doneCondition = 'true'
+			}
+
+			// Check the time left
+			if(doneCondition){
+				document.getElementById("timer").innerHTML = "DONE";
+				clearInterval(slideTimer);
+				showResults(studentSlide);
+			} else {
+				document.getElementById("timer").innerHTML = Math.round(timeLeft / 1000, 2) + ' seconds';
+			}
+		}, 1000);
 
 		conns.filter(conn => conn.open).forEach(conn => {
 			conn.send(studentSlide);
@@ -255,6 +353,13 @@ SOFTWARE.
 
 	showNext.addEventListener('click', function () {
 		currentSlide += 1;
+		if(currentSlide === slides.length - 1){
+			showNext.innerHTML = 'Final Results'
+		}
+		if(currentSlide === slides.length){
+			showFinalResults();
+			return
+		}
 		handleCurrentSlide();
 	})
 
