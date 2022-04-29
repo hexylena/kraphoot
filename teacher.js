@@ -81,8 +81,12 @@ SOFTWARE.
 	 */
 	 function initialize() {
 		// Create own peer object with connection to shared PeerJS server
-		peer = new Peer(null, {
-			debug: 2
+		var roomId = (Math.random() * 10000000).toString().substring(0, 4);
+		peer = new Peer(`gtn-${roomId}`, {
+			debug: 2,
+			host: 'localhost',
+			port: 9000,
+			path: '/'
 		});
 
 		peer.on('open', function (id) {
