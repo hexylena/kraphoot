@@ -179,12 +179,14 @@ SOFTWARE.
 		return chunks;
 	}
 
-	function formatQuestion(data){
-		return data.answers.map((q, idx) => {
+	function showQuestion(data){
+		var show = `<h2>${data.title}</h2>`;
+		show += data.answers.map((q, idx) => {
 			return `
 				<button id="answer-${data.id}-${idx}" value="${q}" class="btn btn-primary">${q}</button>
 			`
 		}).join("");
+		return show;
 	}
 
 	// Listen for enter in message box
@@ -235,9 +237,7 @@ SOFTWARE.
 			timeout: slides[currentSlide].timeout,
 		}
 
-		var show = `<h2>${studentSlide.title}</h2>`;
-		show += formatQuestion(studentSlide);
-		questionArea.innerHTML = show
+		questionArea.innerHTML = showQuestion(studentSlide);
 
 		conns.filter(conn => conn.open).forEach(conn => {
 			conn.send(studentSlide);
