@@ -127,7 +127,7 @@ SOFTWARE.
 			console.log(data)
 			if(data.type === "choose-1"){
 				addMessage(`<span class=\"peerMsg\">Teacher asked: ${data.title}</span>`);
-				showQuestion(data)
+				questionArea.innerHTML = showQuestion(data);
 			} else {
 				addMessage("<span class=\"peerMsg\">Peer:</span> " + data);
 			}
@@ -171,6 +171,40 @@ SOFTWARE.
 		message.innerHTML = "<br><span class=\"msg-time\">" + h + ":" + m + ":" + s + "</span>  -  " + msg + message.innerHTML;
 	};
 
+	function showWelcome(){
+		message.innerHTML = `
+			<div class="display: flex; align-items: center; justify-content: center;">
+				<h1>Enter your name</h1>
+				<input type="text" id="name">
+				<button id="submit-name" class="btn btn-primary">Join!</button>
+			</div>
+		`
+
+		var name_input = document.getElementById(`submit-name`);
+		e.addEventListener('click', () => safeSend(document.getElementById("name").value))
+
+	}
+
+	function safeSend(msg){
+		if (conn && conn.open) {
+			conn.send(msg);
+			addMessage("<span class=\"selfMsg\">Self: </span> " + msg);
+		} else {
+			console.log('Connection is closed');
+		}
+	}
+
+	function showResult(result, score){
+		message.innerHTML = `
+			<div class="display: flex; align-items: center; justify-content: center;">
+				<h1>${result}</h1>
+				<div>
+					Your score is: ${score}
+				</div>
+			</div>
+		`
+	}
+
 	function showQuestion(data){
 		var show = `<h2>${data.title}</h2>`;
 		show += data.answers.map((q, idx) => {
@@ -178,7 +212,6 @@ SOFTWARE.
 				<button id="answer-${data.id}-${idx}" value="${q}" class="btn btn-primary">${q}</button>
 			`
 		}).join("");
-		questionArea.innerHTML = show
 
 		data.answers.forEach((q, idx) => {
 			var e = document.getElementById(`answer-${data.id}-${idx}`);
@@ -193,9 +226,7 @@ SOFTWARE.
 			})
 		})
 
-
-
-
+		return show;
 	}
 
 	/**
@@ -240,10 +271,15 @@ SOFTWARE.
 		}
 	});
 
+	function hideJoin(){
+		document.getElementById("connect-area").style.display = 'none';
+	}
+
 	// Clear messages box
 	clearMsgsButton.addEventListener('click', clearMessages);
 	// Start peer connection on click
 	connectButton.addEventListener('click', join);
+
 
 	// Since all our callbacks are setup, start the process of obtaining an ID
 	initialize();
