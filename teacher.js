@@ -24,6 +24,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  * */
 
+function hideJoin(){
+	document.getElementById("connect-area").style.display = 'none';
+}
+
+function showDebug(){
+	document.getElementsByClassName("debug-info")[0].style.display = '';
+}
+
+
 (function () {
 
 	var lastPeerId = null;
@@ -298,9 +307,19 @@ SOFTWARE.
 	function showFinalResults(){
 		var show = `<h1>Final Results</h1>`;
 		var counts = {}
-		show += JSON.stringify(players)
-		//show += '<table class="table table-striped">'
-		//show += '</table>'
+		show += '<table class="table table-striped">'
+		// Ensure they have a score.
+		var playerIds = Object.keys(players);
+		playerIds.forEach(playerId => { players[playerId].score = players[playerId].score || 0 })
+
+		// Sort them
+		playerIds.sort(function(a, b){return players[a].score - players[b].score});
+
+		// Display
+		playerIds.forEach(playerId => {
+			show += `<tr><td>${players[playerId].name || "Anonymous " + playerId.substr(0, 6)}</td> <td>${players[playerId].score || 0}</td></tr>`
+		})
+		show += '</table>'
 		questionArea.innerHTML = show;
 	}
 
@@ -367,4 +386,10 @@ SOFTWARE.
 	clearMsgsButton.addEventListener('click', clearMessages);
 
 	initialize();
+
+	// Show debug panel
+	var urlShowDebug = (new URL(document.location)).searchParams.get("debug");
+	if(urlShowDebug !== null){
+		showDebug();
+	}
 })();
