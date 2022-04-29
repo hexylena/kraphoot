@@ -12,7 +12,7 @@ Based on: https://jmcker.github.io/Peer-to-Peer-Cue-System it was trivial to imp
 
 ## Features
 
-- [x] JSON structured quizes
+- [x] JSON/YAML structured quizes
 - [x] Sending questions to students
 - [x] Receiving their answers
 - [ ] Self-entered names
@@ -26,3 +26,5 @@ Question types:
 - [x] choose-1
 - [ ] choose-many
 - [ ] true/false (choose-1 sub-case)
+- [ ] poll (instant live results)
+- [ ] fastcups (poll sub-case)
