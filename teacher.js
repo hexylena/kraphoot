@@ -59,32 +59,56 @@ function showDebug(){
 	var currentSlide;
 	var slides = [
 		{
-			type: 'choose-1',
-			title: 'How gay are you?',
-			answers: [
-				'A bit',
-				'Extremely',
-				'Not a lot',
-				'cis/het',
+			"type": "choose-1",
+			"title": "NOT a Mode of Transportation",
+			"answers": [
+				"Train",
+				"Bike",
+				"Boat",
+				"Telephone"
 			],
-			results: {},
-			correct: 'Extremely',
-			timeout: 10
+			"results": {},
+			"correct": "Telephone",
+			"timeout": 10
 		},
 		{
-			type: 'choose-1',
-			title: 'NOT a Mode of Transportation',
-			answers: [
-				'Train',
-				'Bike',
-				'Boat',
-				'Telephone',
+			"type": "choose-1",
+			"title": "The answer is true",
+			"answers": [
+				"True",
+				"False"
 			],
-			results: {},
-			correct: 'Telephone',
-			timeout: 10
+			"results": {},
+			"correct": "True",
+			"timeout": 10
+		},
+		{
+			"type": "poll",
+			"live": true,
+			"title": "Feelings?",
+			"answers": [
+				"Happy",
+				"Sad",
+				"Annoyed",
+				"Angry"
+			],
+			"results": {},
+			"timeout": 20
+		},
+		{
+			"type": "poll",
+			"title": "Best day of the week?",
+			"answers": [
+				"Monday",
+				"Tuesday",
+				"Wednesday",
+				"Thursday",
+				"Friday"
+			],
+			"results": {},
+			"timeout": 20
 		}
-	]
+	];
 	/**
 	 * Create the Peer object for our end of the connection.
 	 *
@@ -192,6 +216,10 @@ function showDebug(){
 			slides[currentSlide].results[connId] =
 				slides[currentSlide].answers.indexOf(message.result)
 
+			if(slides[currentSlide].live){
+				showResults(slides[currentSlide])
+			}
+
 			console.log(slides[currentSlide])
 		} else {
 			console.log("Unknown message", message);
@@ -227,7 +255,6 @@ function showDebug(){
 		}).join("");
 
 		show += '</div>'
-		show += `<div id="timer">${data.timeout} seconds</div>`
 		return show;
 	}
 
@@ -273,6 +300,7 @@ function showDebug(){
 		var slide = slides[currentSlide];
 		var show = `<h1>Results</h1>`;
 		var counts = {}
+		var final_count = 0;
 		Object.keys(slide.results).forEach(connId => {
 			var theirAnswer = slide.results[connId];
 			var answerKey = "";
@@ -280,6 +308,7 @@ function showDebug(){
 				answerKey = "SOMETHING ODD";
 			} else {
 				answerKey = slide.answers[theirAnswer]
+				final_count += 1;
 			}
 
 			if(answerKey === slide.correct){
@@ -289,7 +318,9 @@ function showDebug(){
 
 			counts[answerKey] = 1 + (counts[answerKey] || 0)
 		})
-		console.log(counts)
+		slide.final_results = counts;
+		slide.final_count = final_count;
+		console.log(slide)
 		console.log(players)
 
 		show += '<table class="table table-striped">'
@@ -302,24 +333,81 @@ function showDebug(){
 		})
 		show += '</table>'
 		questionArea.innerHTML = show;
+
+		showNext.removeAttribute("disabled");
+	}
+
+	function renderTable(arr, headers){
+		show = '<table class="table table-striped">'
+		if(headers !== undefined){
+			show += '<thead>'
+			show += "<tr>" + headers.map(col => `<th>${col}</th>`).join("") + "</tr>"
+			show += '</thead>'
+		}
+		show += '<tbody>'
+		show += arr.map(row => {
+			return "<tr>" + row.map(col => `<td>${col}</td>`).join("") + "</tr>"
+		}).join("")
+		show += '</tbody>'
+		show += '</table>'
+		return show
 	}
 
 	function showFinalResults(){
 		var show = `<h1>Final Results</h1>`;
 		var counts = {}
-		show += '<table class="table table-striped">'
 		// Ensure they have a score.
 		var playerIds = Object.keys(players);
 		playerIds.forEach(playerId => { players[playerId].score = players[playerId].score || 0 })
 
 		// Sort them
-		playerIds.sort(function(a, b){return players[a].score - players[b].score});
+		playerIds.sort(function(a, b){return players[b].score - players[a].score});
 
 		// Display
-		playerIds.forEach(playerId => {
-			show += `<tr><td>${players[playerId].name || "Anonymous " + playerId.substr(0, 6)}</td> <td>${players[playerId].score || 0}</td></tr>`
-		})
+		show += renderTable(playerIds.map(playerId => {
+			return [
+				players[playerId].name || "Anonymous " + playerId.substr(0, 6),
+				players[playerId].score || 0
+			]
+		}).slice(0, 3), ['Name', 'Score'])
 		show += '</table>'
+
+
+		// Difficult questions
+		show += '<h2>Difficult Questions</h2>';
+		// What's our def here? Top 3 worst?
+		worstQuestions = slides.filter(s => s.type !== "poll").map(s => {
+			var pc = 0;
+			if (!s.final_results[s.correct]) {
+				pc = 0;
+			} else {
+				if(s.final_count == 0){
+					pc = 0;
+				} else {
+					pc = s.final_results[s.correct] / s.final_count;
+				}
+			}
+
+			return {
+				"title": s.title,
+				"correct": s.correct,
+				"final_results": s.final_results,
+				"percent_correct": (pc * 100).toFixed(1) + '%',
+			}
+		})
+		// Remove perfectly answered
+		worstQuestions = worstQuestions.filter(x => x.percent_correct != 1)
+		// Sort by % correct
+		worstQuestions.sort((a, b) => b.percent_correct < a.percent_correct)
+
+		// Render
+		show += renderTable(worstQuestions.slice(0, 3).map(wq => {
+			return [wq.title, wq.percent_correct, JSON.stringify(wq.final_results)]
+		}), ['Question', '% Correct', 'Answers'])
+
+		console.log(worstQuestions)
+
+
 		questionArea.innerHTML = show;
 	}
 
@@ -334,6 +422,7 @@ function showDebug(){
 		}
 
 		questionArea.innerHTML = showQuestion(studentSlide);
+		showNext.setAttribute("disabled", "");
 
 		// Update the count down every 1 second
 		var slideTimer = setInterval(function() {
@@ -342,13 +431,13 @@ function showDebug(){
 			var doneCondition = timeLeft < 0;
 
 			// How many students have answered?
-			if(Object.keys(players).length === Object.keys(slides[currentSlide].results).length){
+			if(Object.keys(players).length === Object.keys(slides[currentSlide].results).length && ! slides[currentSlide].live){
 				doneCondition = 'true'
 			}
 
 			// Check the time left
 			if(doneCondition){
-				document.getElementById("timer").innerHTML = "DONE";
+				document.getElementById("timer").innerHTML = "";
 				clearInterval(slideTimer);
 				showResults(studentSlide);
 			} else {

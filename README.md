@@ -15,8 +15,8 @@ Based on: https://jmcker.github.io/Peer-to-Peer-Cue-System it was trivial to imp
 - [x] JSON/YAML structured quizes
 - [x] Sending questions to students
 - [x] Receiving their answers
-- [ ] Self-entered names
-- [ ] Leaderboard
+- [x] Self-entered names
+- [x] Leaderboard
 - [ ] Media on the questions/slides.
 - [ ] Showing correct answer student side.
 - [ ] Any sense of aesthetics
@@ -24,7 +24,11 @@ Based on: https://jmcker.github.io/Peer-to-Peer-Cue-System it was trivial to imp
 Question types:
 
 - [x] choose-1
-- [ ] choose-many
-- [ ] true/false (choose-1 sub-case)
-- [ ] poll (instant live results)
+- [x] choose-many
+- [x] true/false (choose-1 sub-case)
+- [x] poll (instant live results)
 - [ ] fastcups (poll sub-case)
+
+Other
+
+- [ ] Self-study mode

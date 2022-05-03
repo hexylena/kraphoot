@@ -102,7 +102,7 @@ function showDebug(){
 		});
 		peer.on('error', function (err) {
 			console.log(err);
-			alert('' + err);
+			questionArea.innerHTML = err;
 		});
 
 	};
@@ -150,6 +150,9 @@ function showDebug(){
 			addMessage("<span class=\"peerMsg\">Peer:</span> " + JSON.stringify(data));
 			console.log(data)
 			if(data.type === "choose-1"){
+				addMessage(`<span class=\"peerMsg\">Teacher asked: ${data.title}</span>`);
+				showQuestion(data);
+			} else if (data.type === "poll") {
 				addMessage(`<span class=\"peerMsg\">Teacher asked: ${data.title}</span>`);
 				showQuestion(data);
 			} else {
@@ -261,7 +264,9 @@ function showDebug(){
 					"question": data.id,
 					"result": e.value,
 				})
-				Array.from(document.getElementsByClassName("answer-button")).forEach(x => x.setAttribute("disabled", ""))
+				if(data.type !== "poll") {
+					Array.from(document.getElementsByClassName("answer-button")).forEach(x => x.setAttribute("disabled", ""))
+				}
 			})
 		})
 
