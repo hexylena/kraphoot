@@ -124,8 +124,8 @@ function showDebug(){
 			roomNumber = (Math.random() * 10000000).toString().substring(0, 4),
 			roomId = roomIdBase + roomNumber;
 
-		var docurl = new URL(document.location),
-			studentUrl = docurl.origin + docurl.path.replace('teacher', 'student') +  `?id=${roomNumber}`
+		var docurl = new URL(document.location);
+		var studentUrl = docurl.origin + docurl.pathname.replace('teacher', 'student') +  `?id=${roomNumber}`
 		var qrcode = new QRious({
 			element: document.getElementById("qrcode"),
 			background: '#ffffff',
