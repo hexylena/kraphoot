@@ -124,6 +124,8 @@ function showDebug(){
 			roomNumber = (Math.random() * 10000000).toString().substring(0, 4),
 			roomId = roomIdBase + roomNumber;
 
+		var docurl = new URL(document.location),
+			studentUrl = docurl.origin + docurl.path.replace('teacher', 'student') +  `?id=${roomNumber}`
 		var qrcode = new QRious({
 			element: document.getElementById("qrcode"),
 			background: '#ffffff',
@@ -133,9 +135,9 @@ function showDebug(){
 			level: 'H',
 			padding: 0,
 			size: 300,
-			value: `http://localhost:8000/student.html?id=${roomNumber}`
+			value: studentUrl
 		});
-		document.getElementById("join-url").innerHTML = `<a href="/student.html?id=${roomId}">Copy This link</a>`
+		document.getElementById("join-url").innerHTML = `<a href="${studentUrl}">Copy This link</a>`
 
 		console.log(roomId);
 		peer = new Peer(roomId, {
