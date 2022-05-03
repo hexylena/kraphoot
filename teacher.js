@@ -120,8 +120,10 @@ function showDebug(){
 	 */
 	 function initialize() {
 		// Create own peer object with connection to shared PeerJS server
-		var roomId = 'gtn-' + (Math.random() * 10000000).toString().substring(0, 4);
-		//peer = new Peer(`gtn-${roomId}`, {
+		var roomIdBase = 'e8a2e4ea-galaxy-training-network-',
+			roomNumber = (Math.random() * 10000000).toString().substring(0, 4),
+			roomId = roomIdBase + roomNumber;
+
 		var qrcode = new QRious({
 			element: document.getElementById("qrcode"),
 			background: '#ffffff',
@@ -131,16 +133,16 @@ function showDebug(){
 			level: 'H',
 			padding: 0,
 			size: 300,
-			value: `http://localhost:8000/student.html?id=${roomId}`
+			value: `http://localhost:8000/student.html?id=${roomNumber}`
 		});
 		document.getElementById("join-url").innerHTML = `<a href="/student.html?id=${roomId}">Copy This link</a>`
 
 		console.log(roomId);
 		peer = new Peer(roomId, {
 			debug: 2,
-			host: 'localhost',
-			port: 9000,
-			path: '/'
+			//host: 'localhost',
+			//port: 9000,
+			//path: '/'
 		});
 
 		peer.on('open', function (id) {

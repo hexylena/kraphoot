@@ -63,9 +63,9 @@ function showDebug(){
 		// Create own peer object with connection to shared PeerJS server
 		peer = new Peer(null, {
 			debug: 2,
-			host: 'localhost',
-			port: 9000,
-			path: '/'
+			//host: 'localhost',
+			//port: 9000,
+			//path: '/'
 		});
 
 		peer.on('open', function (id) {
@@ -132,8 +132,8 @@ function showDebug(){
 
 		// Create connection to destination peer specified in the input field
 		var connectToId = joinId || recvIdInput.value
-		console.log('connecting to ' + connectToId)
-		conn = peer.connect(connectToId, {
+		console.log('connecting to e8a2e4ea-galaxy-training-network-' + connectToId)
+		conn = peer.connect('e8a2e4ea-galaxy-training-network-' + connectToId, {
 			reliable: true
 		});
 
