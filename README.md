@@ -17,9 +17,9 @@ Based on: https://jmcker.github.io/Peer-to-Peer-Cue-System it was trivial to imp
 - [x] Receiving their answers
 - [x] Self-entered names
 - [x] Leaderboard
+- [x] Showing correct answer student side.
+- [x] Any sense of aesthetics
 - [ ] Media on the questions/slides.
-- [ ] Showing correct answer student side.
-- [ ] Any sense of aesthetics
 
 Question types:
 

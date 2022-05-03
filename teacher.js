@@ -46,17 +46,17 @@ function showDebug(){
 	var goBox = document.getElementById("go");
 	var fadeBox = document.getElementById("fade");
 	var offBox = document.getElementById("off");
-	var sendMessageBox = document.getElementById("sendMessageBox");
 	var sendButton = document.getElementById("sendButton");
 	var clearMsgsButton = document.getElementById("clearMsgsButton");
-	var startButton = document.getElementById("startButton");
-	var showAnswer = document.getElementById("showAnswer");
-	var showNext = document.getElementById("showNext");
+	var advanceButton = document.getElementById("advance");
 	var questionArea = document.getElementById("questionArea");
-
+	var lobby = document.getElementById("lobby");
 	var players = {};
 
-	var currentSlide;
+	var currentSlide = -1;
+
+
+	var quiz_title = "Test Quiz"
 	var slides = [
 		{
 			"type": "choose-1",
@@ -109,6 +109,9 @@ function showDebug(){
 			"timeout": 20
 		}
 	];
+
+	document.getElementById("title").innerHTML = quiz_title;
+	document.getElementsByTagName("title")[0].innerHTML = quiz_title;
 	/**
 	 * Create the Peer object for our end of the connection.
 	 *
@@ -117,9 +120,23 @@ function showDebug(){
 	 */
 	 function initialize() {
 		// Create own peer object with connection to shared PeerJS server
-		var roomId = (Math.random() * 10000000).toString().substring(0, 4);
+		var roomId = 'gtn-' + (Math.random() * 10000000).toString().substring(0, 4);
 		//peer = new Peer(`gtn-${roomId}`, {
-		peer = new Peer(`gtn`, {
+		var qrcode = new QRious({
+			element: document.getElementById("qrcode"),
+			background: '#ffffff',
+			backgroundAlpha: 1,
+			foreground: '#5868bf',
+			foregroundAlpha: 1,
+			level: 'H',
+			padding: 0,
+			size: 300,
+			value: `http://localhost:8000/student.html?id=${roomId}`
+		});
+		document.getElementById("join-url").innerHTML = `<a href="/student.html?id=${roomId}">Copy This link</a>`
+
+		console.log(roomId);
+		peer = new Peer(roomId, {
 			debug: 2,
 			host: 'localhost',
 			port: 9000,
@@ -136,16 +153,20 @@ function showDebug(){
 			}
 
 			console.log('ID: ' + peer.id);
-			recvId.innerHTML = "ID: " + peer.id;
-			status.innerHTML = "Awaiting connection...";
+			status.innerHTML = "Awaiting connections...";
 		});
 		peer.on('connection', function (c) {
 			// Allow only a single connection
 			conns.push(c);
-			console.log("Connected to: " + conns.map(c => c.peer));
-			status.innerHTML = `${conns.length} students connected`;
 			players[c.peer] = {}
+			updateStudentList();
 			ready();
+
+			setTimeout(function(){
+				c.send({type: 'setup', title: quiz_title});
+			}, 1000);
+
+
 		});
 		peer.on('disconnected', function () {
 			status.innerHTML = "Connection lost. Please reconnect";
@@ -183,7 +204,6 @@ function showDebug(){
 					console.log(data)
 					processStudentMessage(conn.peer, data);
 					var cueString = "<span class=\"cueMsg\">Cue: </span>";
-					addMessage(conn.peer.substring(0, 9) + cueString + data);
 				});
 			})
 
@@ -199,14 +219,23 @@ function showDebug(){
 			});
 	}
 
+	function updateStudentList(){
+		status.innerHTML = `${conns.length} connections`;
+		if(currentSlide === -1) {
+			lobby.innerHTML =
+				Object.keys(players).map(playerId => {
+					return `<div class="player-name">${playerName(playerId)}</div>`
+				}).join(" ") + '</div>';
+		}
+	}
+
 	function processStudentMessage(connId, message){
+		console.log(connId, message)
 		if(message.event == "registerPlayer"){
-			console.log("New player!")
 			players[connId] = {
 				"name": message.player.name,
 			}
-			status.innerHTML =
-				Object.keys(players).map(x => players[x].name).join(" ");
+			updateStudentList();
 		} else if (message.event === "answer") {
 			if(message.question !== currentSlide){
 				console.log("Attempting to answer wrong question! Ignoring.")
@@ -226,17 +255,6 @@ function showDebug(){
 		}
 	}
 
-	function addMessage(msg) {
-		var now = new Date();
-
-		message.innerHTML = `<br>${msg}${message.innerHTML}`;
-	}
-
-	function clearMessages() {
-		message.innerHTML = "";
-		addMessage("Msgs cleared");
-	}
-
 	function chunkArray(array, chunkSize){
 		var chunks = []
 		for (let i = 0; i < array.length; i += chunkSize) {
@@ -247,10 +265,10 @@ function showDebug(){
 	}
 
 	function showQuestion(data){
-		var show = `<h2>${data.title}</h2><div>`;
+		var show = `<h2>${data.title}</h2><div class="answer-group" style="display: none;">`;
 		show += data.answers.map((q, idx) => {
 			return `
-				<button id="answer-${data.id}-${idx}" value="${q}" class="btn btn-primary">${q}</button>
+				<button id="answer-${data.id}-${idx}" value="${q}" class="btn answer-button">${q}</button>
 			`
 		}).join("");
 
@@ -258,47 +276,16 @@ function showDebug(){
 		return show;
 	}
 
-	// Listen for enter in message box
-	sendMessageBox.addEventListener('keypress', function (e) {
-		var event = e || window.event;
-		var char = event.which || event.keyCode;
-		if (char == '13')
-			sendButton.click();
-	});
-	// Send message
-	sendButton.addEventListener('click', function () {
-		if (conns) {
-			var msg = sendMessageBox.value;
-			conns.filter(conn => conn.open).forEach(conn => {
-				conn.send(msg);
-				addMessage("<span class=\"selfMsg\">Self: </span>" + msg);
-			})
-			console.log("Sent: " + msg)
-			sendMessageBox.value = "";
-		} else {
-			console.log('Connection is closed');
-		}
-	});
-
-	showAnswer.addEventListener('click', function () {
-		var correctAnswer = slides[currentSlide].correct
-		var idx = slides[currentSlide].answers.indexOf(correctAnswer);
-		var e = document.getElementById(`answer-${currentSlide}-${idx}`);
-		e.classList.remove("btn-primary");
-		e.classList.add("btn-success");
-	})
-
-	showAnswer.addEventListener('click', function () {
-		var correctAnswer = slides[currentSlide].correct
-		var idx = slides[currentSlide].answers.indexOf(correctAnswer);
-		var e = document.getElementById(`answer-${currentSlide}-${idx}`);
-		e.classList.remove("btn-primary");
-		e.classList.add("btn-success");
-	})
+	function broadcast(msg){
+		console.log("Broadcast", msg)
+		conns.filter(conn => conn && conn.open).forEach(conn => {
+			conn.send(msg);
+		})
+	}
 
 	function showResults(){
 		var slide = slides[currentSlide];
-		var show = `<h1>Results</h1>`;
+		var show = '<h1>Results</h1>';
 		var counts = {}
 		var final_count = 0;
 		Object.keys(slide.results).forEach(connId => {
@@ -325,16 +312,10 @@ function showDebug(){
 
 		show += '<table class="table table-striped">'
 		slide.answers.forEach(x => {
-			if(slide.correct === x) {
-				show += `<tr class="correct-answer"><td>${x}</td> <td>${counts[x] || 0}</td></tr>`
-			} else {
-				show += `<tr><td>${x}</td> <td>${counts[x] || 0}</td></tr>`
-			}
+			show += `<tr ${slide.correct ===  x ? 'class="correct-answer"' : ''}><td>${x}</td> <td><div class="bar-chart" style="width: ${25 * (counts[x] || 0) / final_count}em">${counts[x] || 0}</div></td></tr>`
 		})
 		show += '</table>'
 		questionArea.innerHTML = show;
-
-		showNext.removeAttribute("disabled");
 	}
 
 	function renderTable(arr, headers){
@@ -350,11 +331,16 @@ function showDebug(){
 		}).join("")
 		show += '</tbody>'
 		show += '</table>'
+		show += '</div>'
 		return show
 	}
 
+	function playerName(playerId){
+		return players[playerId].name || "Anonymous " + playerId.substr(0, 6)
+	}
+
 	function showFinalResults(){
-		var show = `<h1>Final Results</h1>`;
+		var show = '<h1>Final Results</h1>';
 		var counts = {}
 		// Ensure they have a score.
 		var playerIds = Object.keys(players);
@@ -366,7 +352,7 @@ function showDebug(){
 		// Display
 		show += renderTable(playerIds.map(playerId => {
 			return [
-				players[playerId].name || "Anonymous " + playerId.substr(0, 6),
+				playerName(playerId),
 				players[playerId].score || 0
 			]
 		}).slice(0, 3), ['Name', 'Score'])
@@ -376,34 +362,44 @@ function showDebug(){
 		// Difficult questions
 		show += '<h2>Difficult Questions</h2>';
 		// What's our def here? Top 3 worst?
-		worstQuestions = slides.filter(s => s.type !== "poll").map(s => {
-			var pc = 0;
-			if (!s.final_results[s.correct]) {
-				pc = 0;
-			} else {
-				if(s.final_count == 0){
+		worstQuestions = slides
+			.filter(s => s.type !== "poll")
+			.map(s => {
+				var pc = 0;
+				if (!s.final_results || !s.final_results[s.correct]) {
 					pc = 0;
 				} else {
-					pc = s.final_results[s.correct] / s.final_count;
+					if(s.final_count == 0){
+						pc = 0;
+					} else {
+						pc = s.final_results[s.correct] / s.final_count;
+					}
 				}
-			}
 
-			return {
-				"title": s.title,
-				"correct": s.correct,
-				"final_results": s.final_results,
-				"percent_correct": (pc * 100).toFixed(1) + '%',
-			}
-		})
-		// Remove perfectly answered
-		worstQuestions = worstQuestions.filter(x => x.percent_correct != 1)
+				return {
+					"title": s.title,
+					"correct": s.correct,
+					"final_results": s.final_results,
+					"pc": pc,
+					"percent_correct": (pc * 100).toFixed(1) + '%',
+				}
+			})
+			.filter(s => s.pc < 1)
+
 		// Sort by % correct
 		worstQuestions.sort((a, b) => b.percent_correct < a.percent_correct)
 
 		// Render
 		show += renderTable(worstQuestions.slice(0, 3).map(wq => {
-			return [wq.title, wq.percent_correct, JSON.stringify(wq.final_results)]
+			return [
+				wq.title,
+				wq.percent_correct,
+				JSON.stringify(wq.final_results)
+				//renderTable(Object.keys(wq.final_results).map(x => [x, wq.final_results[x]]))
+			]
 		}), ['Question', '% Correct', 'Answers'])
+
+		show += '</div>'
 
 		console.log(worstQuestions)
 
@@ -419,60 +415,71 @@ function showDebug(){
 			answers: slides[currentSlide].answers,
 			started: new Date().getTime(),
 			timeout: slides[currentSlide].timeout,
+			live: slides[currentSlide].live,
 		}
 
 		questionArea.innerHTML = showQuestion(studentSlide);
-		showNext.setAttribute("disabled", "");
+		broadcast({type: 'clear', question: currentSlide})
+
+		var haveBroadcast = false;
 
 		// Update the count down every 1 second
 		var slideTimer = setInterval(function() {
 			var now = new Date().getTime(),
-				timeLeft = studentSlide.started + (studentSlide.timeout * 1000) - now;
-			var doneCondition = timeLeft < 0;
+				showQuestionLeft = studentSlide.started + 5000 - now
+				timeLeft = studentSlide.started + (studentSlide.timeout * 1000) + 5000 - now;
 
+			if(showQuestionLeft < 0){
+				if(!haveBroadcast){
+					haveBroadcast = true;
+					broadcast(studentSlide)
+					document.getElementsByClassName("answer-group")[0].style.display = '';
+				}
+			} else {
+				document.getElementById("progress").style.width = ((5000 - showQuestionLeft) / 50) + "vw"
+				return;
+			}
+
+			var doneCondition = timeLeft < 0;
 			// How many students have answered?
 			if(Object.keys(players).length === Object.keys(slides[currentSlide].results).length && ! slides[currentSlide].live){
-				doneCondition = 'true'
+				doneCondition = true
 			}
 
 			// Check the time left
 			if(doneCondition){
-				document.getElementById("timer").innerHTML = "";
+				document.getElementById("progress").style.width = "100vw"
+				document.getElementById("progress").innerHTML = "&nbsp;";
 				clearInterval(slideTimer);
 				showResults(studentSlide);
+				if(studentSlide.type !== "poll"){
+					broadcast({
+						"type": "answer",
+						"question": currentSlide,
+						"answer": slides[currentSlide].correct
+					});
+				}
 			} else {
-				document.getElementById("timer").innerHTML = Math.round(timeLeft / 1000, 2) + ' seconds';
+				document.getElementById("progress").style.width = timeLeft / studentSlide.timeout / 10 + "vw"
+				document.getElementById("progress").innerHTML = Math.round(timeLeft / 1000, 2);
 			}
-		}, 1000);
+		}, 25);
 
-		conns.filter(conn => conn.open).forEach(conn => {
-			conn.send(studentSlide);
-		})
-
-		addMessage(`<span class="selfMsg">Self: Sent question ${currentSlide}</span>`);
 	}
 
-	startButton.addEventListener('click', function () {
-		// Set the current slide
-		// Send it to the students
-		currentSlide = 0;
-		handleCurrentSlide();
-	});
-
-	showNext.addEventListener('click', function () {
+	advanceButton.addEventListener('click', function () {
+		advanceButton.innerHTML = 'Next Question'
 		currentSlide += 1;
 		if(currentSlide === slides.length - 1){
-			showNext.innerHTML = 'Final Results'
+			advanceButton.innerHTML = 'Final Results'
 		}
 		if(currentSlide === slides.length){
+			advanceButton.style.display = 'none';
 			showFinalResults();
 			return
 		}
 		handleCurrentSlide();
-	})
-
-	// Clear messages box
-	clearMsgsButton.addEventListener('click', clearMessages);
+	});
 
 	initialize();
 

@@ -1,3 +1,91 @@
 .correct-answer {
-	background: yellow;
+	background: #9ee09e;
+}
+
+#title {
+	text-align: center;
+}
+
+#advance{
+	width: 100vw;
+	font-size: 200%;
+}
+
+.player-name {
+	padding: 1em;
+	background: #aca;
+	border-radius: 10px;
+	font-size: 150%;
+	margin: 0.5em;
+}
+
+#lobby {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-around;
+}
+
+#progress {
+	background: #feb144;
+	height: 100%;
+	padding: 0.2em;
+	font-size: 150%;
+}
+
+#controls {
+	height: 20vh;
+}
+
+#questionArea {
+	height: 73vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: wrap;
+	flex-direction: column;
+	justify-content: space-around;
+	flex-grow: 3;
+}
+
+#timer {
+	height: 7vh;
+}
+
+.bar-chart {
+	background: #c0c0ed;
+	border: 1px solid #6767ad;
+	padding: 0.2em 1em;
+	width: 25em;
+}
+
+.answer-group {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-around;
+}
+
+.answer-button {
+	font-size: 200%;
+	width: 50vw;
+	height:4em;
+}
+
+.answer-group .answer-button:nth-of-type(6n+1){
+	background: #cc99c9;
+}
+.answer-group .answer-button:nth-of-type(6n+2){
+	background: #9ec1cf;
+}
+.answer-group .answer-button:nth-of-type(6n+3){
+	background: #9ee09e;
+}
+.answer-group .answer-button:nth-of-type(6n+4){
+	background: #fdfd97;
+}
+.answer-group .answer-button:nth-of-type(6n+5){
+	background: #feb144;
+}
+.answer-group .answer-button:nth-of-type(6n+6){
+	background: #ff6663;
 }

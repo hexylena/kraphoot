@@ -9,34 +9,16 @@
 		<link href="style.css" rel="stylesheet">
 	</head>
 	<body>
-		<div class="container">
-			<h1>Kraphoot: Student</h1>
-			<div class="row debug-info" style="display: none;">
-				<div class="col">
-					<div id="connect-area">
-						<div class="title">Status:</div>
-						<span style="font-weight: bold">ID: </span>
-						<input type="text" id="receiver-id" title="Input the ID from receive.html">
-						<button id="connect-button" class="btn btn-primary">Connect</button>
-					</div>
-					<span><div id="status" class="status"></div></span>
-				</div>
-				<div class="col">
-					<div class="title">Messages:</div>
-					<input type="text" id="sendMessageBox" placeholder="Enter a message..." autofocus="true" />
-					<button type="button" class="btn btn-secondary" id="sendButton">Send</button>
-					<button type="button" class="btn btn-danger" id="clearMsgsButton">Clear Msgs (Local)</button>
-					<span><div class="message" id="message"></div></span>
-				</div>
-			</div>
-
-			<div class="row">
-				<div id="questionArea" class="col" style="height: 50vh;display: flex; align-items: center;justify-content: center; flex-direction: column">
-				</div>
-			</div>
+		<div id="controls">
+			<h1 id="title">Kraphoot: Student</h1>
+			<div id="status" class="status"></div>
 		</div>
 
+		<div id="questionArea">
+		</div>
 
+		<div id="timer">
+		</div>
 
 		<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 		<script src="student.js"></script>

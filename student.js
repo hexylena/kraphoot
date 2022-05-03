@@ -51,6 +51,7 @@ function showDebug(){
 	var cueString = "<span class=\"cueMsg\">Cue: </span>";
 
 	var player = {};
+	var answersGiven = {};
 
 	/**
 	 * Create the Peer object for our end of the connection.
@@ -110,7 +111,7 @@ function showDebug(){
 	function postInit(){
 		var urlOption = (new URL(document.location)).searchParams.get("id");
 		if(urlOption !== null){
-			recvIdInput.value = urlOption;
+			//recvIdInput.value = urlOption;
 			join(null, urlOption);
 			//setTimeout(function() { join(null, urlOption) }, 500);
 		}
@@ -147,16 +148,29 @@ function showDebug(){
 		});
 		// Handle incoming data (messages only since this is the signal sender)
 		conn.on('data', function (data) {
-			addMessage("<span class=\"peerMsg\">Peer:</span> " + JSON.stringify(data));
 			console.log(data)
 			if(data.type === "choose-1"){
-				addMessage(`<span class=\"peerMsg\">Teacher asked: ${data.title}</span>`);
 				showQuestion(data);
 			} else if (data.type === "poll") {
-				addMessage(`<span class=\"peerMsg\">Teacher asked: ${data.title}</span>`);
 				showQuestion(data);
+			} else if (data.type === "setup") {
+				document.getElementById("title").innerHTML = data.title;
+				document.getElementsByTagName("title")[0].innerHTML = data.title;
+			} else if (data.type === "clear") {
+				questionArea.innerHTML = `<h2>Question ${data.question + 1}</h2>`;
+			} else if (data.type === "answer") {
+				if(data.answer === answersGiven[data.question]){
+					// correct!
+					questionArea.innerHTML = `
+						<h2>Congratulations</h2>
+					`
+				} else {
+					questionArea.innerHTML = `
+						<h2>Too bad :(</h2>
+					`
+				}
 			} else {
-				addMessage("<span class=\"peerMsg\">Peer:</span> " + data);
+				console.log("Unknown message")
 			}
 		});
 		conn.on('close', function () {
@@ -194,8 +208,6 @@ function showDebug(){
 				t = "0" + t;
 			return t;
 		};
-
-		message.innerHTML = "<br><span class=\"msg-time\">" + h + ":" + m + ":" + s + "</span>  -  " + msg + message.innerHTML;
 	};
 
 	function showWelcome(){
@@ -247,10 +259,10 @@ function showDebug(){
 	}
 
 	function showQuestion(data){
-		var show = `<h1>${data.title}</h1><div>`;
+		var show = `<h2>${data.title}</h2><div class="answer-group">`;
 		show += data.answers.map((q, idx) => {
 			return `
-				<button id="answer-${data.id}-${idx}" value="${q}" class="btn btn-primary answer-button">${q}</button>
+				<button id="answer-${data.id}-${idx}" value="${q}" class="btn answer-button">${q}</button>
 			`
 		}).join("");
 		show += '</div>';
@@ -264,8 +276,10 @@ function showDebug(){
 					"question": data.id,
 					"result": e.value,
 				})
-				if(data.type !== "poll") {
-					Array.from(document.getElementsByClassName("answer-button")).forEach(x => x.setAttribute("disabled", ""))
+				answersGiven[data.id] = e.value
+				console.log(data);
+				if(data.type !== "poll" || ! data.live) {
+					Array.from(document.getElementsByClassName("answer-button")).forEach(x => x.style.display = 'none')
 				}
 			})
 		})
@@ -295,31 +309,8 @@ function showDebug(){
 		addMessage("Msgs cleared");
 	};
 
-	// Listen for enter in message box
-	sendMessageBox.addEventListener('keypress', function (e) {
-		var event = e || window.event;
-		var char = event.which || event.keyCode;
-		if (char == '13')
-			sendButton.click();
-	});
-	// Send message
-	sendButton.addEventListener('click', function () {
-		if (conn && conn.open) {
-			var msg = sendMessageBox.value;
-			sendMessageBox.value = "";
-			conn.send(msg);
-			console.log("Sent: " + msg);
-			addMessage("<span class=\"selfMsg\">Self: </span> " + msg);
-		} else {
-			console.log('Connection is closed');
-		}
-	});
-
-	// Clear messages box
-	clearMsgsButton.addEventListener('click', clearMessages);
 	// Start peer connection on click
-	connectButton.addEventListener('click', join);
-
+	//connectButton.addEventListener('click', join);
 
 	// Snce all our callbacks are setup, start the process of obtaining an ID
 	initialize();

@@ -5,46 +5,28 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Kraphoot: Teacher</title>
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
 		<link href="style.css" rel="stylesheet">
 	</head>
 	<body>
-
-		<div class="container">
-			<h1>Kraphoot: Teacher</h1>
+		<div id="controls">
+			<h1 id="title">Kraphoot: Teacher</h1>
 			<div id="status" class="status"></div>
-			<div class="row debug-info" style="display: none;">
-				<div class="col">
-					<h2>Status</h2>
-					<div id="receiver-id" style="font-weight: bold;" title="Copy this ID to the input on send.html.">ID:</div>
-				</div>
-				<div class="col">
-					<h2>Messages</h2>
-					<input type="text" id="sendMessageBox" placeholder="Enter a message..." autofocus="true" />
-					<button type="button" class="btn btn-secondary" id="sendButton">Send</button>
-					<button type="button" class="btn btn-danger" id="clearMsgsButton">Clear Msgs (Local)</button>
-					<div class="message" id="message"></div>
 
-				</div>
-			</div>
+			<button type="button" class="btn btn-primary" id="advance">Start</button>
+		</div>
 
-			<div class="row">
-				<div class="col">
-						<button type="button" class="btn btn-primary" id="startButton">Start</button>
-				</div>
-				<div class="col">
-					<button type="button" class="btn btn-secondary" id="showAnswer">Answer</button>
-				</div>
-				<div class="col">
-					<button type="button" class="btn btn-success" id="showNext">Next Question</button>
-				</div>
+		<div id="questionArea" style="flex-direction: row">
+			<div>
+				<canvas id="qrcode"></canvas>
+				<div id="join-url"></div>
 			</div>
+			<div id="lobby"></div>
+		</div>
 
-			<div id="questionArea">
-			</div>
-
-			<div id="timer">
-			</div>
+		<div id="timer">
+			<div id="progress">&nbsp;</div>
 		</div>
 
 		<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
