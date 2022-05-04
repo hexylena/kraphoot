@@ -53,7 +53,7 @@ function showDebug(){
 	var lobby = document.getElementById("lobby");
 	var players = {};
 	var slideTimer;
-	var slides;
+	var slides, quiz_title;
 
 	var currentSlide = -1;
 
@@ -67,6 +67,7 @@ function showDebug(){
 					return x
 				});
 
+				quiz_title = data.title;
 				document.getElementById("title").innerHTML = data.title;
 				document.getElementsByTagName("title")[0].innerHTML = data.title;
 			})
