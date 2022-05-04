@@ -52,66 +52,25 @@ function showDebug(){
 	var questionArea = document.getElementById("questionArea");
 	var lobby = document.getElementById("lobby");
 	var players = {};
+	var slideTimer;
+	var slides;
 
 	var currentSlide = -1;
 
 
-	var quiz_title = "Test Quiz"
-	var slides = [
-		{
-			"type": "choose-1",
-			"title": "NOT a Mode of Transportation",
-			"answers": [
-				"Train",
-				"Bike",
-				"Boat",
-				"Telephone"
-			],
-			"results": {},
-			"correct": "Telephone",
-			"timeout": 10
-		},
-		{
-			"type": "choose-1",
-			"title": "The answer is true",
-			"answers": [
-				"True",
-				"False"
-			],
-			"results": {},
-			"correct": "True",
-			"timeout": 10
-		},
-		{
-			"type": "poll",
-			"live": true,
-			"title": "Feelings?",
-			"answers": [
-				"Happy",
-				"Sad",
-				"Annoyed",
-				"Angry"
-			],
-			"results": {},
-			"timeout": 20
-		},
-		{
-			"type": "poll",
-			"title": "Best day of the week?",
-			"answers": [
-				"Monday",
-				"Tuesday",
-				"Wednesday",
-				"Thursday",
-				"Friday"
-			],
-			"results": {},
-			"timeout": 20
-		}
-	];
+	function loadQuiz(url){
+		fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				slides = data.questions.map(x => {
+					x.results = {};
+					return x
+				});
 
-	document.getElementById("title").innerHTML = quiz_title;
-	document.getElementsByTagName("title")[0].innerHTML = quiz_title;
+				document.getElementById("title").innerHTML = data.title;
+				document.getElementsByTagName("title")[0].innerHTML = data.title;
+			})
+	}
 	/**
 	 * Create the Peer object for our end of the connection.
 	 *
@@ -126,6 +85,9 @@ function showDebug(){
 
 		var docurl = new URL(document.location);
 		var studentUrl = docurl.origin + docurl.pathname.replace('teacher', 'student') +  `?id=${roomNumber}`
+
+		loadQuiz(docurl.origin + docurl.pathname.replace('teacher.html', '') + docurl.searchParams.get('q') + '.json')
+
 		var qrcode = new QRious({
 			element: document.getElementById("qrcode"),
 			background: '#ffffff',
@@ -428,7 +390,7 @@ function showDebug(){
 		var haveBroadcast = false;
 
 		// Update the count down every 1 second
-		var slideTimer = setInterval(function() {
+		slideTimer = setInterval(function() {
 			var now = new Date().getTime(),
 				showQuestionLeft = studentSlide.started + 5000 - now
 				timeLeft = studentSlide.started + (studentSlide.timeout * 1000) + 5000 - now;
@@ -472,6 +434,8 @@ function showDebug(){
 	}
 
 	advanceButton.addEventListener('click', function () {
+		// Remove any existing timer if there is one.
+		clearInterval(slideTimer);
 		advanceButton.innerHTML = 'Next Question'
 		currentSlide += 1;
 		if(currentSlide === slides.length - 1){

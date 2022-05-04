@@ -19,6 +19,7 @@ Based on: https://jmcker.github.io/Peer-to-Peer-Cue-System it was trivial to imp
 - [x] Leaderboard
 - [x] Showing correct answer student side.
 - [x] Any sense of aesthetics
+- [x] Load from URL
 - [ ] Media on the questions/slides.
 
 Question types:

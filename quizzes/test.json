@@ -1,0 +1,55 @@
+{
+	"title": "Test Quiz",
+	"questions": [
+		{
+			"type": "choose-1",
+			"title": "NOT a Mode of Transportation",
+			"answers": [
+				"Train",
+				"Bike",
+				"Boat",
+				"Telephone"
+			],
+			"results": {},
+			"correct": "Telephone",
+			"timeout": 10
+		},
+		{
+			"type": "choose-1",
+			"title": "The answer is true",
+			"answers": [
+				"True",
+				"False"
+			],
+			"results": {},
+			"correct": "True",
+			"timeout": 10
+		},
+		{
+			"type": "poll",
+			"live": true,
+			"title": "Feelings?",
+			"answers": [
+				"Happy",
+				"Sad",
+				"Annoyed",
+				"Angry"
+			],
+			"results": {},
+			"timeout": 20
+		},
+		{
+			"type": "poll",
+			"title": "Best day of the week?",
+			"answers": [
+				"Monday",
+				"Tuesday",
+				"Wednesday",
+				"Thursday",
+				"Friday"
+			],
+			"results": {},
+			"timeout": 20
+		}
+	]
+}

@@ -138,7 +138,7 @@ function showDebug(){
 		});
 
 		conn.on('open', function () {
-			status.innerHTML = "Connected to: " + conn.peer;
+			status.innerHTML = "Connected to: gtn-" + conn.peer.substring(33);
 			console.log("Connected to: " + conn.peer);
 
 			// Check URL params for comamnds that should be sent immediately
