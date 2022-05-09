@@ -24,14 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  * */
 
-function hideJoin(){
-	document.getElementById("connect-area").style.display = 'none';
-}
-
-function showDebug(){
-	document.getElementsByClassName("debug-info")[0].style.display = '';
-}
-
 (function () {
 
 	var lastPeerId = null;
@@ -40,15 +32,7 @@ function showDebug(){
 	var recvIdInput = document.getElementById("receiver-id");
 	var status = document.getElementById("status");
 	var message = document.getElementById("message");
-	var goButton = document.getElementById("goButton");
-	var resetButton = document.getElementById("resetButton");
-	var fadeButton = document.getElementById("fadeButton");
-	var offButton = document.getElementById("offButton");
-	var sendMessageBox = document.getElementById("sendMessageBox");
-	var sendButton = document.getElementById("sendButton");
-	var clearMsgsButton = document.getElementById("clearMsgsButton");
 	var connectButton = document.getElementById("connect-button");
-	var cueString = "<span class=\"cueMsg\">Cue: </span>";
 
 	var player = {};
 	var answersGiven = {};
@@ -63,9 +47,9 @@ function showDebug(){
 		// Create own peer object with connection to shared PeerJS server
 		peer = new Peer(null, {
 			debug: 2,
-			//host: 'localhost',
-			//port: 9000,
-			//path: '/'
+			host: 'localhost',
+			port: 9000,
+			path: '/'
 		});
 
 		peer.on('open', function (id) {
@@ -186,29 +170,10 @@ function showDebug(){
 		if (conn && conn.open) {
 			conn.send(sigName);
 			console.log(sigName + " signal sent");
-			addMessage(cueString + sigName);
 		} else {
 			console.log('Connection is closed');
 		}
 	}
-
-	function addMessage(msg) {
-		var now = new Date();
-		var h = now.getHours();
-		var m = addZero(now.getMinutes());
-		var s = addZero(now.getSeconds());
-
-		if (h > 12)
-			h -= 12;
-		else if (h === 0)
-			h = 12;
-
-		function addZero(t) {
-			if (t < 10)
-				t = "0" + t;
-			return t;
-		};
-	};
 
 	function showWelcome(){
 		questionArea.innerHTML = `
@@ -241,7 +206,6 @@ function showDebug(){
 	function safeSend(msg){
 		if (conn && conn.open) {
 			conn.send(msg);
-			addMessage("<span class=\"selfMsg\">Self: </span> " + msg);
 		} else {
 			console.log('Connection is closed');
 		}
@@ -302,11 +266,6 @@ function showDebug(){
 			return null;
 		else
 			return results[1];
-	};
-
-	function clearMessages() {
-		message.innerHTML = "";
-		addMessage("Msgs cleared");
 	};
 
 	// Start peer connection on click

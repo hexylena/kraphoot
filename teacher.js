@@ -24,15 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  * */
 
-function hideJoin(){
-	document.getElementById("connect-area").style.display = 'none';
-}
-
-function showDebug(){
-	document.getElementsByClassName("debug-info")[0].style.display = '';
-}
-
-
 (function () {
 
 	var lastPeerId = null;
@@ -42,18 +33,13 @@ function showDebug(){
 	var recvId = document.getElementById("receiver-id");
 	var status = document.getElementById("status");
 	var message = document.getElementById("message");
-	var standbyBox = document.getElementById("standby");
-	var goBox = document.getElementById("go");
-	var fadeBox = document.getElementById("fade");
-	var offBox = document.getElementById("off");
-	var sendButton = document.getElementById("sendButton");
-	var clearMsgsButton = document.getElementById("clearMsgsButton");
 	var advanceButton = document.getElementById("advance");
 	var questionArea = document.getElementById("questionArea");
 	var lobby = document.getElementById("lobby");
 	var players = {};
 	var slideTimer;
 	var slides, quiz_title;
+	var mode = 'SELF_STUDY';
 
 	var currentSlide = -1;
 
@@ -89,25 +75,30 @@ function showDebug(){
 
 		loadQuiz(docurl.origin + docurl.pathname.replace('teacher.html', '') + docurl.searchParams.get('q') + '.json')
 
-		var qrcode = new QRious({
-			element: document.getElementById("qrcode"),
-			background: '#ffffff',
-			backgroundAlpha: 1,
-			foreground: '#5868bf',
-			foregroundAlpha: 1,
-			level: 'H',
-			padding: 0,
-			size: 300,
-			value: studentUrl
-		});
+		// If we're self-studying, don't bother setting up the peers
+		if(mode == 'SELF_STUDY'){
+			return;
+		}
+
+		//var qrcode = new QRious({
+			//element: document.getElementById("qrcode"),
+			//background: '#ffffff',
+			//backgroundAlpha: 1,
+			//foreground: '#5868bf',
+			//foregroundAlpha: 1,
+			//level: 'H',
+			//padding: 0,
+			//size: 300,
+			//value: studentUrl
+		//});
 		document.getElementById("join-url").innerHTML = `<a href="${studentUrl}">Copy This link</a>`
 
 		console.log(roomId);
 		peer = new Peer(roomId, {
 			debug: 2,
-			//host: 'localhost',
-			//port: 9000,
-			//path: '/'
+			host: 'localhost',
+			port: 9000,
+			path: '/'
 		});
 
 		peer.on('open', function (id) {
@@ -170,7 +161,6 @@ function showDebug(){
 					console.log("Data recieved");
 					console.log(data)
 					processStudentMessage(conn.peer, data);
-					var cueString = "<span class=\"cueMsg\">Cue: </span>";
 				});
 			})
 
