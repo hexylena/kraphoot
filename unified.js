@@ -35,7 +35,8 @@ var lastPeerId = null,
 	advanceButton = document.getElementById("advance"),
 	questionArea = document.getElementById("questionArea"),
 	lobby = document.getElementById("lobby"),
-	progressBar = document.getElementById("progress");
+	progressBar = document.getElementById("progress"),
+	displayTime = 5000;
 
 // Teacher Only
 var players = {};
@@ -59,6 +60,9 @@ if(mode === 'teacher' || mode === 'self') {
 	advanceButton.style.visibility = 'visible';
 } else {
 	progressBar.style.visibility = 'hidden';
+}
+if(mode === 'self'){
+	displayTime = 0;
 }
 
 function generateRoomId(){
@@ -259,6 +263,12 @@ function join(evt, joinId) {
 }
 
 function safeSend(msg){
+	if(mode === 'self'){
+		console.log('SELF', msg);
+		processStudentMessage('SELF', msg);
+		return;
+	}
+
 	console.log("Sending", msg)
 	if (conn && conn.open) {
 		conn.send(msg);
@@ -279,14 +289,6 @@ function showResult(result, score){
 }
 
 function showQuestion(data){
-	if(mode === 'teacher'){
-		return showQuestionTeacher(data);
-	} else {
-		return showQuestionStudent(data);
-	}
-}
-
-function showQuestionStudent(data){
 	var show = `<h2>${data.title}</h2><div class="answer-group">`;
 	show += data.answers.map((q, idx) => {
 		return `
@@ -296,36 +298,24 @@ function showQuestionStudent(data){
 	show += '</div>';
 	questionArea.innerHTML = show;
 
-	data.answers.forEach((q, idx) => {
-		var e = document.getElementById(`answer-${data.id}-${idx}`);
-		e.addEventListener('click', function () {
-			safeSend({
-				"event": "answer",
-				"question": data.id,
-				"result": e.value,
+	// Only the teacher doesn't need them to be clickable.
+	if(mode !== 'teacher'){
+		data.answers.forEach((q, idx) => {
+			var e = document.getElementById(`answer-${data.id}-${idx}`);
+			e.addEventListener('click', function () {
+				safeSend({
+					"event": "answer",
+					"question": data.id,
+					"result": e.value,
+				})
+				answersGiven[data.id] = e.value
+				console.log(data);
+				if(data.type !== "poll" || ! data.live) {
+					Array.from(document.getElementsByClassName("answer-button")).forEach(x => x.style.display = 'none')
+				}
 			})
-			answersGiven[data.id] = e.value
-			console.log(data);
-			if(data.type !== "poll" || ! data.live) {
-				Array.from(document.getElementsByClassName("answer-button")).forEach(x => x.style.display = 'none')
-			}
 		})
-	})
-
-	return show;
-}
-
-
-function showQuestionTeacher(data){
-	var show = `<h2>${data.title}</h2><div class="answer-group" style="display: none;">`;
-	show += data.answers.map((q, idx) => {
-		return `
-			<button id="answer-${data.id}-${idx}" value="${q}" class="btn answer-button">${q}</button>
-		`
-	}).join("");
-
-	show += '</div>'
-	return show;
+	}
 }
 
 function updateStudentList(){
@@ -515,7 +505,7 @@ function handleCurrentSlide(){
 		live: slides[currentSlide].live,
 	}
 
-	questionArea.innerHTML = showQuestion(studentSlide);
+	showQuestion(studentSlide);
 	broadcast({type: 'clear', question: currentSlide})
 
 	var haveBroadcast = false;
@@ -523,8 +513,8 @@ function handleCurrentSlide(){
 	// Update the count down every 1 second
 	slideTimer = setInterval(function() {
 		var now = new Date().getTime(),
-			showQuestionLeft = studentSlide.started + 5000 - now
-			timeLeft = studentSlide.started + (studentSlide.timeout * 1000) + 5000 - now;
+			showQuestionLeft = studentSlide.started + displayTime - now
+			timeLeft = studentSlide.started + (studentSlide.timeout * 1000) + displayTime - now;
 
 		if(showQuestionLeft < 0){
 			if(!haveBroadcast){
@@ -533,7 +523,7 @@ function handleCurrentSlide(){
 				document.getElementsByClassName("answer-group")[0].style.display = '';
 			}
 		} else {
-			progressBar.style.width = ((5000 - showQuestionLeft) / 50) + "vw"
+			progressBar.style.width = ((displayTime - showQuestionLeft) / 50) + "vw"
 			return;
 		}
 
@@ -656,6 +646,9 @@ function showRoomCode(){
 		}
 
 		if(mode == 'self'){
+			// Fake a 'self' connection
+			players['SELF'] = {}
+			safeSend({event: 'registerPlayer', player: {name: 'Self Study'}})
 			return;
 		}
 
