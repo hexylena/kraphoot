@@ -1,34 +1,105 @@
+/**
+This code was originally licensed under MIT, and then heavily modified. The MIT license is retained below.
+
+MIT License
+
+Copyright (c) 2017 Jack McKernan
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ * */
+
+var lastPeerId = null;
+var peer = null; // Own peer object
+var peerId = null;
+var conns = [];
+var conn;
+var recvId = document.getElementById("receiver-id");
+var status = document.getElementById("status");
+var message = document.getElementById("message");
+var advanceButton = document.getElementById("advance");
+var questionArea = document.getElementById("questionArea");
+var lobby = document.getElementById("lobby");
+
+// Teacher Only
+var players = {};
+var slideTimer;
+var slides, quiz_title;
+var currentSlide = -1;
+
+// Student only
+var player = {};
+var answersGiven = {};
+
+
 function getUrlParam(name){
 	return (new URL(document.location)).searchParams.get(name);
 }
 
 const roomIdBase = 'e8a2e4ea-galaxy-training-network-';
-const is_teacher = getUrlParam('teacher') !== null;
+const mode = getUrlParam('mode');
+
+if(mode === 'teacher' || mode === 'self') {
+	advanceButton.style.visibility = 'visible';
+}
 
 function generateRoomId(){
 	var roomNumber = (Math.random() * 10000000).toString().substring(0, 4),
 		roomId = roomIdBase + roomNumber;
-
 	return [roomNumber, roomId]
+}
+
+function updateQrCode(roomNumber, roomId){
+	var docurl = new URL(document.location);
+	var studentUrl = docurl.origin + docurl.pathname.replace('teacher', 'student') +  `?id=${roomNumber}`
+	var qrcode = new QRious({
+		element: document.getElementById("qrcode"),
+		background: '#ffffff',
+		backgroundAlpha: 1,
+		foreground: '#5868bf',
+		foregroundAlpha: 1,
+		level: 'H',
+		padding: 0,
+		size: 300,
+		value: studentUrl
+	});
+	document.getElementById("join-url").innerHTML = `<div><a href="${studentUrl}">Copy This link</a></div><div class='room-number'>${roomNumber}</div>`
 }
 
 
 function postInit(){
-	console.log(is_teacher)
-	if(!is_teacher){
+	if(mode === 'self'){
+		// DO SOMETGIN
+	} else if(mode === 'teacher'){
+		status.innerHTML = "Awaiting connections...";
+	} else {
 		var urlOption = getUrlParam("id");
 		if(urlOption !== null){
 			//recvIdInput.value = urlOption;
 			join(null, urlOption);
 			//setTimeout(function() { join(null, urlOption) }, 500);
+		} else {
+			showRoomCode();
 		}
-		showWelcome();
-	} else {
-		status.innerHTML = "Awaiting connections...";
 	}
 }
 
-function peerOn(id){
+function peerOn(peer, id){
 	// Workaround for peer.reconnect deleting previous id
 	if (peer.id === null) {
 		console.log('Received null id from peer open');
@@ -37,7 +108,7 @@ function peerOn(id){
 		lastPeerId = peer.id;
 	}
 
-	console.log('ID: ' + peer.id, is_teacher);
+	console.log('ID: ' + peer.id, mode);
 	postInit();
 }
 
@@ -52,15 +123,8 @@ function peerError (err) {
 }
 
 function peerConnect(c){
-	console.log("Peer connected", c, is_teacher)
-	if(!is_teacher){
-		// Disallow incoming connections
-		c.on('open', function() {
-			c.send("Sender does not accept incoming connections");
-			setTimeout(function() { c.close(); }, 500);
-		});
-	} else {
-		// Allow only a single connection
+	console.log("Peer connected", c, mode)
+	if(mode === 'teacher'){
 		conns.push(c);
 		players[c.peer] = {}
 		updateStudentList();
@@ -69,6 +133,12 @@ function peerConnect(c){
 		setTimeout(function(){
 			c.send({type: 'setup', title: quiz_title});
 		}, 1000);
+	} else {
+		// Disallow incoming connections
+		c.on('open', function() {
+			c.send("Sender does not accept incoming connections");
+			setTimeout(function() { c.close(); }, 500);
+		});
 	}
 }
 
@@ -168,6 +238,8 @@ function join(evt, joinId) {
 	conn.on('close', function () {
 		status.innerHTML = "Connection closed";
 	});
+
+	showWelcome();
 };
 
 /**
@@ -204,7 +276,7 @@ function showResult(result, score){
 }
 
 function showQuestion(data){
-	if(is_teacher){
+	if(mode === 'teacher'){
 		return showQuestionTeacher(data);
 	} else {
 		return showQuestionStudent(data);
@@ -553,4 +625,19 @@ function loadQuiz(url){
 			document.getElementById("title").innerHTML = data.title;
 			document.getElementsByTagName("title")[0].innerHTML = data.title;
 		})
+}
+
+function showRoomCode(){
+	questionArea.innerHTML = `
+		<div class="display: flex; align-items: center; justify-content: center;">
+			<h1>Enter Your Room Number</h1>
+			<input type="text" id="roomnumber">
+			<button id="submit-room" class="btn btn-primary">Join!</button>
+		</div>
+	`
+
+	var name_input = document.getElementById(`submit-room`);
+	name_input.addEventListener('click', () => {
+		join(null, document.getElementById("roomnumber").value);
+	})
 }

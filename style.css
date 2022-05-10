@@ -1,3 +1,9 @@
+body {
+	background: linear-gradient(135deg, #ddd2ff 25%, transparent 25%) -40px 0/80px 80px,
+		linear-gradient(225deg, #eae2ff 25%, transparent 25%) -40px 0/ 80px 80px,
+		linear-gradient(315deg, #ddd2ff 25%, transparent 25%) 0px 0/ 80px 80px,
+		linear-gradient(45deg, #eae2ff 25%, white 25%) 0px 0/ 80px 80px
+}
 .correct-answer {
 	background: #9ee09e;
 }
@@ -9,6 +15,8 @@
 #advance{
 	width: 100vw;
 	font-size: 200%;
+
+	visibility: hidden;
 }
 
 .player-name {
@@ -89,3 +97,14 @@
 .answer-group .answer-button:nth-of-type(6n+6){
 	background: #ff6663;
 }
+
+.room-number {
+	font-size: 500%;
+	font-family: monospace;
+}
+
+#join-deets {
+	text-align: center;
+}
+
+
