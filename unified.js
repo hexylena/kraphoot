@@ -24,17 +24,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  * */
 
-var lastPeerId = null;
-var peer = null; // Own peer object
-var peerId = null;
-var conns = [];
-var conn;
-var recvId = document.getElementById("receiver-id");
-var status = document.getElementById("status");
-var message = document.getElementById("message");
-var advanceButton = document.getElementById("advance");
-var questionArea = document.getElementById("questionArea");
-var lobby = document.getElementById("lobby");
+var lastPeerId = null,
+	peer = null, // Own peer object
+	peerId = null,
+	conns = [],
+	conn = null,
+	recvId = document.getElementById("receiver-id"),
+	status = document.getElementById("status"),
+	message = document.getElementById("message"),
+	advanceButton = document.getElementById("advance"),
+	questionArea = document.getElementById("questionArea"),
+	lobby = document.getElementById("lobby"),
+	progressBar = document.getElementById("progress");
 
 // Teacher Only
 var players = {};
@@ -56,6 +57,8 @@ const mode = getUrlParam('mode');
 
 if(mode === 'teacher' || mode === 'self') {
 	advanceButton.style.visibility = 'visible';
+} else {
+	progressBar.style.visibility = 'hidden';
 }
 
 function generateRoomId(){
@@ -530,7 +533,7 @@ function handleCurrentSlide(){
 				document.getElementsByClassName("answer-group")[0].style.display = '';
 			}
 		} else {
-			document.getElementById("progress").style.width = ((5000 - showQuestionLeft) / 50) + "vw"
+			progressBar.style.width = ((5000 - showQuestionLeft) / 50) + "vw"
 			return;
 		}
 
@@ -542,8 +545,8 @@ function handleCurrentSlide(){
 
 		// Check the time left
 		if(doneCondition){
-			document.getElementById("progress").style.width = "100vw"
-			document.getElementById("progress").innerHTML = "&nbsp;";
+			progressBar.style.width = "100vw"
+			progressBar.innerHTML = "&nbsp;";
 			clearInterval(slideTimer);
 			showResults(studentSlide);
 			if(studentSlide.type !== "poll"){
@@ -554,8 +557,8 @@ function handleCurrentSlide(){
 				});
 			}
 		} else {
-			document.getElementById("progress").style.width = timeLeft / studentSlide.timeout / 10 + "vw"
-			document.getElementById("progress").innerHTML = Math.round(timeLeft / 1000, 2);
+			progressBar.style.width = timeLeft / studentSlide.timeout / 10 + "vw"
+			progressBar.innerHTML = Math.round(timeLeft / 1000, 2);
 		}
 	}, 25);
 
@@ -641,3 +644,40 @@ function showRoomCode(){
 		join(null, document.getElementById("roomnumber").value);
 	})
 }
+
+(function () {
+	 function initialize() {
+		var docurl = new URL(document.location);
+		var roomId;
+
+		if(mode === 'self' || mode === 'teacher'){
+			loadQuiz(docurl.origin + docurl.pathname.replace('quiz.html', '') + docurl.searchParams.get('q') + '.json')
+			var [roomNumber, roomId] = generateRoomId();
+		}
+
+		if(mode == 'self'){
+			return;
+		}
+
+		peer = new Peer(roomId, {
+			debug: 2,
+			host: 'localhost',
+			port: 9000,
+			path: '/'
+		});
+
+		if(mode === 'teacher'){
+			updateQrCode(roomNumber, roomId);
+		}
+
+		peer.on('open', (id) => peerOn(peer, id));
+		peer.on('connection', (c) => peerConnect(c));
+		peer.on('disconnected', peerDisconnect);
+		peer.on('close', peerClose);
+		peer.on('error', (err) => peerError(err));
+	};
+
+	advanceButton.addEventListener('click', advanceListener);
+
+	initialize();
+})();
